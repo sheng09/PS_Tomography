@@ -78,11 +78,11 @@ int Model3DLayer::ReadModel3DLayer(FILE **fp)
 	{
 		blks.clear();
 	}
-	// Read 2nd, 3rd, 4th  line 
+	// Read 2nd, 3rd, 4th  line
 	if (xs.size() > 0)	xs.clear();
 	if (ys.size() > 0)	ys.clear();
 	if (zs.size() > 0)	zs.clear();
-	
+
 	for (int i = 0; i < ny; ++i)
 	{
 		fscanf(*fp,"%lf",&dtmp);
@@ -98,7 +98,7 @@ int Model3DLayer::ReadModel3DLayer(FILE **fp)
 		fscanf(*fp,"%lf",&dtmp);
 		zs.push_back(dtmp);
 	}
-	
+
 	// Read velocity
 	if (blks.size() > 0)	blks.clear();
 	for (int k = 0; k < nz; ++k)
@@ -194,10 +194,10 @@ int Model3D::ReadModel3D(FILE **fp)
 	{
 		// Read head info
 		if( fscanf(*fp,"%d %d %d %d %d %d",
-				&(_mlayer.ny), &(_mlayer.nx), &(_mlayer.nz), 
-				&(_mlayer.TotalNumLayer), &(_mlayer.LayerOrder), &(_mlayer.LoopOrder) ) 
+				&(_mlayer.ny), &(_mlayer.nx), &(_mlayer.nz),
+				&(_mlayer.TotalNumLayer), &(_mlayer.LayerOrder), &(_mlayer.LoopOrder) )
 			==EOF ) break;
-		
+
 		if(_mlayer.xs.size() > 0) 	_mlayer.xs.clear();
 		if(_mlayer.ys.size() > 0) 	_mlayer.ys.clear();
 		if(_mlayer.zs.size() > 0) 	_mlayer.zs.clear();
@@ -231,7 +231,7 @@ int Model3D::ModelAverage(vector<double> *_zs, vector<double> *_vs, int _itn)
 	double _v;
 	double _z;
 	int 	_itmp;
-	if( _itn > layers[layers.size()-1].LoopOrder ) 
+	if( _itn > layers[layers.size()-1].LoopOrder )
 	{
 		fprintf(stderr, " Err: in subroutine Model3D::ModelAverage() !\n");
 		fprintf(stderr, " You are request for the %dth iteration ak, but the max iteration number is %d \n",
@@ -267,6 +267,69 @@ int Model3D::ModelAverage(vector<double> *_zs, vector<double> *_vs, int _itn)
 	return 1;
 }
 
+int Model3D::Model1D(vector<double> *_zs, vector<double> *_vs, int _itn, double x, double y)
+{
+	double _v;
+	double _z;
+	int 	_itmp;
+	int    ix, iy;
+	double  v00, v01, v10, v11, _v0, _v1;
+	double  x00, x01;
+	double  y00, y01;
+	if( _itn > layers[layers.size()-1].LoopOrder )
+	{
+		fprintf(stderr, " Err: in subroutine Model3D::Model1D() !\n");
+		fprintf(stderr, " You are request for the %dth iteration ak, but the max iteration number is %d \n",
+			_itn, layers[layers.size()-1].LoopOrder );
+		exit(0);
+	}
+	if( (*_zs).size() > 0) (*_zs).clear();
+	if( (*_vs).size() > 0) (*_vs).clear();
+
+	int begin = 0;
+	while(1)
+	{
+		if(layers[begin].LoopOrder == _itn ) break;
+		++begin;
+	}
+	int end = begin+ layers[begin].TotalNumLayer;
+	for (int i = begin; i < end; ++i)
+	{
+		if(x <= layers[i].xs[0] || x >= layers[i].xs[layers[i].nx -1] ||
+		   y <= layers[i].ys[0] || y >= layers[i].ys[layers[i].ny -1]    )
+		{
+			fprintf(stderr, " Err: in subroutine Model3D::Model1D() !\n");
+			fprintf(stderr, " You are request for point (%lf,%lf), it is out of range!\n", x,y);
+			exit(0);
+		}
+		ix = locateXF( &(layers[i].xs), x);
+		iy = locateXF( &(layers[i].ys), y);
+
+		x00 = layers[i].xs[ix];
+		x01 = layers[i].xs[ix+1];
+		y00 = layers[i].ys[iy];
+		y01 = layers[i].ys[iy+1];
+
+		_itmp = layers[i].nx * layers[i].ny;
+		for(int j = 1; j < layers[i].nz - 1 ;++j)
+		{
+			_z = layers[i].zs[j];
+			v00 = layers[i].blks[j*_itmp + layers[i].nx * iy + ix].vp;
+			v01 = layers[i].blks[j*_itmp + layers[i].nx * iy + ix + 1].vp;
+			v10 = layers[i].blks[j*_itmp + layers[i].nx * (iy + 1) + ix].vp;
+			v11 = layers[i].blks[j*_itmp + layers[i].nx * (iy + 1) + ix + 1].vp;
+
+			_v0 = LI(x00, v00, x01, v01, x);
+			_v1 = LI(x00, v10, x01, v11, x);
+			_v  = LI(y00, _v0, y01, _v1, y);
+
+			(*_zs).push_back(_z);
+			(*_vs).push_back(_v);
+		}
+	}
+	return 1;
+}
+
 /**
  * locate position given vector
  * @param  xs [data vector]
@@ -276,8 +339,9 @@ int Model3D::ModelAverage(vector<double> *_zs, vector<double> *_vs, int _itn)
  * eg
  * 	 0  1  2  3  4  5
  * 	 9  12 45 50 60 70
- *  8  10   46   60        80
- *  0  0    2    4         4
+ *
+ *  given  : 8  10   46   60        80
+ *  return : 0  0    2    4         4
  */
 int locateXF(vector<double> *_xs, double _x)
 {

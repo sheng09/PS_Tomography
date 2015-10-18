@@ -15,7 +15,7 @@ EXEC = 	getEq4Depth getEq4Profile \
 		dtTest \
 		LiaolingTransform \
 		gndk \
-		getAverageModel1D \
+		getAverageModel1D getModel1D\
 		getRaypath41D
 
 CFLAGS = -Wall -Ofast -lm -I${INC}
@@ -85,6 +85,8 @@ gndk: gndk.c
 getAverageModel1D: getAverageModel1D.cpp VelModel.h VelModel.o
 	${CXX} -o getAverageModel1D ${SRC}/getAverageModel1D.cpp VelModel.o ${CXXFLAGS}
 
+getModel1D: getModel1D.cpp VelModel.h VelModel.o
+	${CXX} -o getModel1D ${SRC}/getModel1D.cpp VelModel.o ${CXXFLAGS}
 ################################################################################
 getRaypath41D: getRaypath41D.cpp tx.h tx.o VelModel.h VelModel.o
 	${CXX} -o getRaypath41D ${SRC}/getRaypath41D.cpp tx.o VelModel.o ${CXXFLAGS}

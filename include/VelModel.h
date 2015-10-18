@@ -15,14 +15,14 @@ using namespace std;
 	 * Coordinates convention
 	 *                           UP
 	 *                                      North
-	 *                        z  |  
+	 *                        z  |
 	 *                           |        y
 	 *                           |       /
 	 *                           |     /
 	 *                           |   /
 	 *                           | /           x
 	 *                           .-------------   East
-	 *                 
+	 *
 	 */
 
 class _CartesianCoord
@@ -42,7 +42,7 @@ public:
 
 	double 		vp;
 	double 		vs;
-	
+
 	Block();
 	~Block();
 };
@@ -73,18 +73,18 @@ public:
 /**
  *   Model3D class is used to read, save and processing data from 'RTM.out' format file.
  *   In 'RTM.out' file, the data is saved orderly according to layers and iteration number.
- *  Thus, {Model3d } using a {vector <Model3Dlayer> layers} to save these orderly data one by one. 
+ *  Thus, {Model3d } using a {vector <Model3Dlayer> layers} to save these orderly data one by one.
  *  For each {layers[i]}, it has its special {6 info numbers()}, {coordinates}, {velocity array}
  *
  *  Member variables:
  *  	TotalNumLayer: Number of layers within the model
  *  	layers       : vector orderly store every layer according iteration number and layer orders
- *  	
+ *
  *  Member subroutines:
  *  	ClearModel3D() : clear vector 'layers'
  *  	ReadModel3D()  : read data from 'RTM.out' and save it into 'layers'
  *  	OutModel3D()   : output 'layers' into 'RTM.out'
- *  	ModelAverage() : acquire the 1d average model according to 'layers', 
+ *  	ModelAverage() : acquire the 1d average model according to 'layers',
  *  	                 given '_itn'(number of iteration number, 0 represents initial model).
  */
 class Model3D
@@ -92,7 +92,7 @@ class Model3D
 public:
 	int 	TotalNumLayer; // it do not equal to layers.size(), but number of layers of the model.
 	vector<Model3DLayer> layers;
-	
+
 	Model3D();
 	~Model3D();
 
@@ -101,6 +101,7 @@ public:
 	int OutModel3D(FILE **fp);
 
 	int ModelAverage(vector<double> *_zs, vector<double> *_vs, int _itn);
+	int Model1D(vector<double> *_zs, vector<double> *_vs, int _itn, double x, double y);
 };
 
 int locateXF(vector<double> *xs, double x);

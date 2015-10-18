@@ -12,8 +12,13 @@ using namespace std;
 
 static char _HMSG[]=
 {"\n\
-    getAverageModel1d  -I <inputfile> \n\
-                       -N <iteration number>\n\
+Description: Given 3d model and a point(lon,lat), return 1d model\n\
+    getModel1D  -I <inputfile> \n\
+                -N <iteration number>\n\
+                -P <lon/lat>\n\
+\n\
+Example:\n\
+    getModel1D -I RTM.out -N 0 -P 120/38\n\
 "};
 
 int main(int argc, char  *argv[])
@@ -25,14 +30,18 @@ int main(int argc, char  *argv[])
 	{
 		{"input",		required_argument, 	NULL,	'I'},
 		{"iteration",	optional_argument,	NULL,	'N'},
+		{"point",       required_argument,  NULL,   'P'},
 		{0,				0,					0,		0}
 	};
 	int 	_Index;
 	char 	*str_infile,
-			*str_iteration;
+			*str_iteration,
+			*str_point;
 	int 	flag_infile        =0,
-			flag_iteration     =0;
-	while( (oc = getopt_long(argc,argv,":I:N:H", _Option, &_Index)) != -1 )
+			flag_iteration     =0,
+			flag_point         =0;
+	double  x,y;
+	while( (oc = getopt_long(argc,argv,":I:N:P:H", _Option, &_Index)) != -1 )
 	{
 		switch(oc)
 		{
@@ -43,6 +52,10 @@ int main(int argc, char  *argv[])
 			case 'N':
 				str_iteration   = optarg;
 				flag_iteration  = 1;
+				break;
+			case 'P':
+				str_point       = optarg;
+				flag_point      = 1;
 				break;
 			case 'H':
 				fprintf(stderr, "%s\n",_HMSG );
@@ -56,7 +69,7 @@ int main(int argc, char  *argv[])
 				exit(0);
 		}
 	}
-	if(flag_infile != 1)
+	if(flag_infile != 1 || flag_point != 1)
 	{
 		fprintf(stderr, "More argumets required\n");
 		fprintf(stderr, "%s\n",_HMSG );
@@ -87,7 +100,8 @@ int main(int argc, char  *argv[])
 		itn = 0;
 	}
 
-	m3d.ModelAverage(&zs,&vs,itn);
+	sscanf(str_point, "%lf/%lf", &x, &y);
+	m3d.Model1D(&zs,&vs,itn, x, y );
 
 	for (int i = 0; i < zs.size(); ++i)
 	{
@@ -95,7 +109,5 @@ int main(int argc, char  *argv[])
 	}
 
 	fclose(fpin);
-	return 0;
-
 	return 0;
 }
